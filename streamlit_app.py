@@ -105,8 +105,8 @@ def add_predefined_tickers(tickers):
     #st.success(f'Ticker aggiunti: {", ".join(tickers)}')
 
 def svuota_tickers():
-    available_tickers.clear()
-    st.session_state.available_tickers = available_tickers
+    st.session_state.available_tickers = []
+    st.session_state.selezioni = []
 
 def add_ticker():
     user_input = st.session_state.text_input_ticker.strip()
@@ -117,10 +117,9 @@ def add_ticker():
         # Controlla se il ticker è valido
         data = check_ticker_is_valid(ticker)
         if data is not None:
-            if user_input not in available_tickers:
-                available_tickers.append(user_input)
-                st.session_state.selezioni.append(user_input)
-                st.session_state.available_tickers = available_tickers
+            if ticker not in available_tickers:
+                st.session_state.selezioni.append(ticker)
+                st.session_state.available_tickers.append(ticker)
                 st.session_state.text_input_ticker = ""
         else:
             st.error(f"Ticker '{user_input}' non valido o senza dati disponibili.")
