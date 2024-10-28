@@ -174,7 +174,7 @@ def plot_stocks(tickers):
 # Funzione per aggiungere ticker predefiniti alla lista dei ticker selezionati
 def add_predefined_tickers(tickers):
     for ticker in tickers:
-        if ticker not in available_tickers:
+        if ticker not in st.session_state.available_tickers:
             st.session_state.available_tickers.append(ticker)
             st.session_state.selezioni.append(ticker)
 
@@ -194,7 +194,7 @@ def add_ticker():
         # Controlla se il ticker è valido
         data = check_ticker_is_valid(ticker)
         if data is not None:
-            if ticker not in available_tickers:
+            if ticker not in st.session_state.available_tickers:
                 st.session_state.available_tickers.append(ticker)
             
             if ticker not in st.session_state.selezioni:
@@ -207,10 +207,6 @@ def add_ticker():
         else:
             st.error(f"Ticker '{user_input}' non valido o dati non disponibili.")
 
-def plot_selected_stocks():
-    selected_stocks = st.session_state.selected_stocks
-    if len(selected_stocks) > 0:
-        plot_stocks(selected_stocks)
 
 def add_share_button():
     stocks_comma =  ';'.join(selected_stocks)
@@ -287,14 +283,17 @@ if 'available_tickers' not in st.session_state:
 if 'selezioni' not in st.session_state:
     st.session_state.selezioni = []
 
-available_tickers = st.session_state.get('available_tickers', [])
-selected_tickers = st.session_state.get('selezioni', [])
+# available_tickers = st.session_state.get('available_tickers', [])
+# selected_tickers = st.session_state.get('selezioni', [])
+
+show_plot = False
 
 # Gestione dei parametri presenti in query string
 if 'isin' in st.query_params:
     query_tickers = st.query_params.isin
     query_tickers_list = query_tickers.split(';')
     add_predefined_tickers(query_tickers_list)
+    #show_plot = True
 
 # Titolo dell'applicazione
 st.title('Volatilità delle azioni')
@@ -359,9 +358,6 @@ with col2:
 
 st.divider()
 
-# st.write(st.session_state.available_tickers)
-# st.write(st.session_state.selezioni) 
-
 # Select box per mostrare i ticker aggiunti
 selected_stocks = st.multiselect('Ticker da visualizzare nel grafico:', st.session_state.available_tickers, default=st.session_state.selezioni
                                 # , on_change=lambda: st.query_params.clear()
@@ -371,6 +367,10 @@ selected_stocks = st.multiselect('Ticker da visualizzare nel grafico:', st.sessi
 
 # Mostra i grafici solo se ci sono ticker validi aggiunti
 if len(selected_stocks) > 0:
-    if st.button('Mostra grafico'):
+    if st.button('Mostra grafico') or show_plot:
         plot_stocks(selected_stocks)
         add_share_button()
+
+
+# st.write(st.session_state.available_tickers)
+# st.write(st.session_state.selezioni) 
