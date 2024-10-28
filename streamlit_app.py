@@ -4,6 +4,8 @@ import pandas as pd
 import yfinance as yf
 import streamlit as st
 import plotly.graph_objects as go
+import streamlit.components.v1 as components
+import os
 
 # Scarica i dati dell'ultimo anno per un dato ticker
 @st.cache_data(ttl=3600)
@@ -193,16 +195,89 @@ def add_ticker():
         data = check_ticker_is_valid(ticker)
         if data is not None:
             if ticker not in available_tickers:
-                st.session_state.selezioni.append(ticker)
                 st.session_state.available_tickers.append(ticker)
-                st.session_state.text_input_ticker = ""
+            
+            if ticker not in st.session_state.selezioni:
+                st.write('aaagiungo')
+                st.session_state.selezioni.append(ticker)
+            else:
+                st.write('non aggiungo')   
+
+            st.session_state.text_input_ticker = ""
         else:
-            st.error(f"Ticker '{user_input}' non valido o senza dati disponibili.")
+            st.error(f"Ticker '{user_input}' non valido o dati non disponibili.")
 
 def plot_selected_stocks():
     selected_stocks = st.session_state.selected_stocks
     if len(selected_stocks) > 0:
         plot_stocks(selected_stocks)
+
+def add_share_button():
+    stocks_comma =  ';'.join(selected_stocks)
+    html = f'''
+         <a class="share-button" onclick="sharePage(event)">
+            <span class="icon">🔗Condividi</span> 
+        </a>
+        '''
+    css = '''
+        <style>
+            .share-button {
+                display: inline-flex;
+                align-items: center;
+                padding: 0.25rem 0.75rem;
+                font-size: 16px;
+                color: rgb(49, 51, 63);
+                background-color: white;
+                border: 1px solid rgba(49, 51, 63, 0.2);
+                border-radius: 0.5rem;
+                cursor: pointer;
+                font-family: "Source Sans Pro", sans-serif;
+                font-size: 16px;
+                # transition: background-color 0.3s;
+                text-decoration: none;
+            }
+
+            .share-button .icon {
+                margin-right: 8px;
+                font-size: 18px;
+            }
+
+            .share-button:hover {
+                border-color: rgb(255, 75, 75);
+                color: rgb(255, 75, 75);
+            }
+        </style>
+        '''
+    
+    js = f'''
+        <script>
+            function sharePage(evt) {{
+                evt.preventDefault();
+
+                if (navigator.share) {{
+                    navigator.share({{
+                        title: document.title,
+                        text: "Guarda questa pagina!",
+                        url: "?isin={stocks_comma}"
+                    }}).then(() => {{
+                        console.log("Pagina condivisa con successo");
+                    }}).catch((error) => {{
+                        console.error("Errore nella condivisione:", error);
+                    }});
+                }}
+                else {{
+                    navigator.clipboard.writeText(evt.target.getAttribute("href")).then(() => {{
+                        alert("Link copiato negli appunti"); 
+                    }}, 
+                    () => {{
+                        alert("Errore nella copia del link");
+                    }});
+                }}
+            }}
+        </script>
+    '''
+
+    components.html(css + js + html)
 
 ####################################################################################################
 
@@ -214,6 +289,12 @@ if 'selezioni' not in st.session_state:
 
 available_tickers = st.session_state.get('available_tickers', [])
 selected_tickers = st.session_state.get('selezioni', [])
+
+# Gestione dei parametri presenti in query string
+if 'isin' in st.query_params:
+    query_tickers = st.query_params.isin
+    query_tickers_list = query_tickers.split(';')
+    add_predefined_tickers(query_tickers_list)
 
 # Titolo dell'applicazione
 st.title('Volatilità delle azioni')
@@ -278,8 +359,13 @@ with col2:
 
 st.divider()
 
+# st.write(st.session_state.available_tickers)
+# st.write(st.session_state.selezioni) 
+
 # Select box per mostrare i ticker aggiunti
 selected_stocks = st.multiselect('Ticker da visualizzare nel grafico:', st.session_state.available_tickers, default=st.session_state.selezioni
+                                # , on_change=lambda: st.query_params.clear()
+                                , key="selezioni"
                                 #, on_change=plot_selected_stocks, key="selected_stocks"
                                 )
 
@@ -287,3 +373,4 @@ selected_stocks = st.multiselect('Ticker da visualizzare nel grafico:', st.sessi
 if len(selected_stocks) > 0:
     if st.button('Mostra grafico'):
         plot_stocks(selected_stocks)
+        add_share_button()
