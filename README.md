@@ -1,19 +1,24 @@
-# 🎈 Blank app template
+# 📈 Applicazione per la Visualizzazione della Volatilità delle Azioni
 
-A simple Streamlit app template for you to modify!
+Consente di visualizzare il grafico con il posizionamento percentuale dei prezzi delle azioni nel range di movimento del titolo.
+Nel punto 0 viene visualizzato il dato odierno.
+Le azioni sono ordinate dall'alto verso il basso in ordine di spostamento tra minimo e massimo. Quelle che si sono mosse di meno vengono visualizzate in alto nel grafico.
+Per l'analisi vengono utilizzati i dati di Yahoo Finance.
 
-[![Open in Streamlit](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://blank-app-template.streamlit.app/)
+## Come eseguire l'applicazione sul tuo computer
 
-### How to run it on your own machine
-
-1. Install the requirements
-
+1. Installa i requisiti:
+   ```sh
+   pip install -r requirements.txt
    ```
-   $ pip install -r requirements.txt
+
+2. Esegui l'applicazione
+   ``` sh
+   streamlit run streamlit_app.py
    ```
 
-2. Run the app
+## Funzionalità
 
-   ```
-   $ streamlit run streamlit_app.py
-   ```
+- **Aggiungi Ticker:** Puoi aggiungere ticker specifici compatibili con Yahoo Finance.
+- **Mostra Grafico:** Mostra la tabella e il grafico con le informazioni sulle azioni selezionate. 
+- **Condividi:** Condividi la pagina con un link generato automaticamente.

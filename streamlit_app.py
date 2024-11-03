@@ -1,6 +1,6 @@
+import datetime
 import numpy as np
 import pandas as pd
-# import matplotlib.pyplot as plt
 import yfinance as yf
 import streamlit as st
 import plotly.graph_objects as go
@@ -9,10 +9,10 @@ import os
 
 # Scarica i dati dell'ultimo anno per un dato ticker
 @st.cache_data(ttl=3600)
-def get_stock_data(ticker):
+def get_stock_data(ticker, start_date, end_date):
     try:
         azione = yf.Ticker(ticker)
-        data = azione.history(period="1y")
+        data = azione.history(start=start_date, end=end_date)
         if data.empty:
             return None, None
         
@@ -31,14 +31,14 @@ def check_ticker_is_valid(ticker):
         return None
 
 # Funzione principale per elaborare e visualizzare i dati per più stock
-def plot_stocks(tickers):
+def plot_stocks(tickers, start_date, end_date):
     
     # Creare il DataFrame vuoto
     df = pd.DataFrame()
 
     for ticker in tickers:
         # Scarica i dati
-        nome_completo, data = get_stock_data(ticker)
+        nome_completo, data = get_stock_data(ticker, start_date, end_date)
         if data is None:
             st.write(f"Ticker '{ticker}' non valido o senza dati disponibili.")
             continue
@@ -52,8 +52,6 @@ def plot_stocks(tickers):
         min_day = data['Low'].idxmin()  # Giorno del valore minimo
         max_day = data['High'].idxmax()  # Giorno del valore massimo
 
-        #percentuale_salita = min_val - current_val
-        #percentuale_discesa = max_val - current_val
         percentuale_da_max = 1 - (current_val / max_val)
         percentuale_da_min = (min_val / current_val) - 1
         differenza = abs(percentuale_da_min - percentuale_da_max)
@@ -83,55 +81,17 @@ def plot_stocks(tickers):
                  column_order=[
                      'Nome Completo', 
                      'YF', 
-                    #  'Giorno Minimo', 
-                    #  'Valore Minimo', 
                      'FormattedMin',
                      'Valore Attuale',
-                    #  'Valore Massimo',
-                    #  'Giorno Massimo', 
                      'FormattedMax',
                      ],
                  column_config={
                     'YF': st.column_config.LinkColumn("YF", display_text="🌍"),
-                    # 'Giorno Minimo': st.column_config.DateColumn(format="DD/MM/YYYY"),
-                    # 'Giorno Massimo': st.column_config.DateColumn(format="DD/MM/YYYY"),
-                    # 'Perc. da Min': st.column_config.NumberColumn(format="%.2f %%"),                
-                    # 'Perc. da Max': st.column_config.NumberColumn(format="%.2f %%"),
                     'Valore Attuale': st.column_config.NumberColumn(format="%.2f"),
                     'FormattedMin': st.column_config.TextColumn("Minimo"),
                     'FormattedMax': st.column_config.TextColumn("Massimo"),
                     'Differenza': None
                 })
-
-    # # Definire la posizione delle barre
-    # plt.figure(figsize=(12, 8))
-    # y_pos = np.arange(len(df))
-
-    # # Creare il grafico a barre orizzontali
-    # fig, ax = plt.subplots(figsize=(8, 6))
-
-    # # Barre per la salita (a destra di zero)
-    # ax.barh(y_pos, df['Perc. da Min'], align='center', color='green', label="")
-    # # Barre per la discesa (a sinistra di zero)
-    # ax.barh(y_pos, df['Perc. da Max'], align='center', color='red', label="")
-
-    # # Etichette
-    # ax.set_yticks(y_pos)
-    # ax.set_yticklabels(df.index)
-    # # ax.set_xlabel('Percentuale')
-    # ax.set_title('Salita e discesa delle azioni rispetto al valore attuale')
-
-    # # Aggiungere la linea centrale per l'actual (zero)
-    # ax.axvline(0, color='black', linewidth=3)
-
-    # # Mostrare la leggenda
-    # ax.legend()
-
-    # # Mostrare il grafico
-    # st.pyplot(plt)
-
-    # --------------------------------------------
-
 
     # Creare il grafico a barre orizzontali con Plotly
     fig = go.Figure()
@@ -169,8 +129,6 @@ def plot_stocks(tickers):
     st.plotly_chart(fig)
 
 
-
-
 # Funzione per aggiungere ticker predefiniti alla lista dei ticker selezionati
 def add_predefined_tickers(tickers):
     for ticker in tickers:
@@ -178,8 +136,6 @@ def add_predefined_tickers(tickers):
             st.session_state.available_tickers.append(ticker)
             st.session_state.selezioni.append(ticker)
 
-    #st.session_state['available_tickers'] = available_tickers
-    #st.success(f'Ticker aggiunti: {", ".join(tickers)}')
 
 def svuota_tickers():
     st.session_state.available_tickers = []
@@ -198,10 +154,9 @@ def add_ticker():
                 st.session_state.available_tickers.append(ticker)
             
             if ticker not in st.session_state.selezioni:
-                st.write('aaagiungo')
                 st.session_state.selezioni.append(ticker)
-            else:
-                st.write('non aggiungo')   
+            # else:
+            #     st.write('non aggiungo')   
 
             st.session_state.text_input_ticker = ""
         else:
@@ -283,9 +238,6 @@ if 'available_tickers' not in st.session_state:
 if 'selezioni' not in st.session_state:
     st.session_state.selezioni = []
 
-# available_tickers = st.session_state.get('available_tickers', [])
-# selected_tickers = st.session_state.get('selezioni', [])
-
 show_plot = False
 
 # Gestione dei parametri presenti in query string
@@ -296,12 +248,9 @@ if 'isin' in st.query_params:
     #show_plot = True
 
 # Titolo dell'applicazione
-st.title('Volatilità delle azioni')
+st.title('Posizionamento delle azioni')
 
 with st.sidebar:
-    st.markdown("""
-        
-        """)
 
     # Definisci alcune liste predefinite di ticker
     global_tech_stocks = ['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'TSLA']
@@ -358,6 +307,16 @@ with col2:
 
 st.divider()
 
+today = datetime.datetime.now()
+year_ago = today - datetime.timedelta(days=365)
+selected_date = st.date_input(
+    "Seleziona periodo",
+    (year_ago, today),
+    year_ago,
+    today,
+    format="DD/MM/YYYY",
+)
+
 # Select box per mostrare i ticker aggiunti
 selected_stocks = st.multiselect('Ticker da visualizzare nel grafico:', st.session_state.available_tickers, default=st.session_state.selezioni
                                 # , on_change=lambda: st.query_params.clear()
@@ -368,7 +327,7 @@ selected_stocks = st.multiselect('Ticker da visualizzare nel grafico:', st.sessi
 # Mostra i grafici solo se ci sono ticker validi aggiunti
 if len(selected_stocks) > 0:
     if st.button('Mostra grafico') or show_plot:
-        plot_stocks(selected_stocks)
+        plot_stocks(selected_stocks, selected_date[0], selected_date[1])
         add_share_button()
 
 
