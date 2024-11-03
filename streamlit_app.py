@@ -23,7 +23,7 @@ def get_stock_data(ticker, start_date, end_date):
     
 def check_ticker_is_valid(ticker):
     try:
-        data = yf.download(ticker, period="1d")
+        data = yf.download(ticker, period="10d")
         if data.empty:
             return None
         return data
